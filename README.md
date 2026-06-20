@@ -1,4 +1,4 @@
-# 🏥 Hospital Patient Registry System
+# 🏥 Hospital Patient Registration System
 
 A lightweight and responsive **Web Application** to manage hospital patient admissions. Built as a simple 2-file project using **Node.js, Express.js**, and **HTML5/CSS3** (embedded styling).
 
