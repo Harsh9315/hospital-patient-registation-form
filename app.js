@@ -1,185 +1,270 @@
 const express = require("express");
-const fs = require("fs");
+const mongoose = require("mongoose");
 const path = require("path");
 
 const app = express();
+
 app.use(express.urlencoded({ extended: true }));
 
-const commonStyles = `
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #059669;
-            --primary-gradient: linear-gradient(135deg, #059669 0%, #064e3b 100%);
-            --bg-gradient: radial-gradient(circle at 0% 0%, #f0fdf4 0%, #dcfce7 50%, #f0fdfa 100%);
-            --card-bg: rgba(255, 255, 255, 0.95);
-            --text-main: #064e3b;
-            --text-muted: #14532d;
-            --border: #bbf7d0;
-        }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: var(--bg-gradient);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-            position: relative;
-            overflow-x: hidden;
-        }
-        body::before {
-            content: "";
-            position: absolute;
-            width: 350px;
-            height: 350px;
-            background: #a7f3d0;
-            filter: blur(130px);
-            top: 5%;
-            left: 10%;
-            z-index: -1;
-            border-radius: 50%;
-        }
-        body::after {
-            content: "";
-            position: absolute;
-            width: 300px;
-            height: 300px;
-            background: #fef08a;
-            filter: blur(120px);
-            bottom: 5%;
-            right: 10%;
-            z-index: -1;
-            border-radius: 50%;
-        }
-        .main-wrapper {
-            display: flex;
-            background-color: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 25px 50px -12px rgba(6, 78, 59, 0.08);
-            width: 100%;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.9rem 1.8rem;
-            background: var(--primary-gradient);
-            color: white;
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 700;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            box-shadow: 0 10px 25px -6px rgba(6, 78, 59, 0.3);
-            gap: 8px;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 14px 28px -6px rgba(6, 78, 59, 0.4);
-        }
-    </style>
-`;
+mongoose.connect(process.env.MONGO_URI);
+
+const patientSchema = new mongoose.Schema({
+    studentName: { type: String, required: true },
+    dateOfAdmission: { type: String, required: true },
+    rollno: { type: String, required: true }
+});
+
+const Patient = mongoose.model("Patient", patientSchema);
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.post("/register", (req, res) => {
-    const patientData = `Name: ${req.body.studentName}, Date: ${req.body.dateOfAdmission}, Illness: ${req.body.rollno}\n`;
-    fs.appendFileSync("student_registry.txt", patientData);
-    
-    res.send(`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <title>Success | Registry</title>
-            ${commonStyles}
-        </head>
-        <body>
-            <div class="main-wrapper" style="max-width: 460px; flex-direction: column; padding: 3rem 2.5rem; text-align: center; align-items: center;">
-                <div style="font-size: 3.5rem; margin-bottom: 0.5rem; filter: drop-shadow(0 6px 8px rgba(5, 150, 105, 0.2));">💖</div>
-                <h2 style="font-size: 1.7rem; font-weight: 800; margin: 0 0 0.5rem 0; letter-spacing: -0.02em;">Successfully Registered!</h2>
-                <p style="color: var(--text-muted); font-weight: 500; margin-bottom: 2rem; font-size: 1rem;">
-                    Patient <strong style="color: #064e3b; font-weight: 700;">${req.body.studentName}</strong> data has been securely saved by the Nurse Desk.
-                </p>
-                <a href="/" class="btn" style="width: 100%;">🔙 Go Back to Dashboard</a>
-            </div>
-        </body>
-        </html>
-    `);
+app.post("/register", async (req, res) => {
+    try {
+        const newPatient = new Patient({
+            studentName: req.body.studentName,
+            dateOfAdmission: req.body.dateOfAdmission,
+            rollno: req.body.rollno
+        });
+
+        await newPatient.save();
+        
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Success</title>
+                <style>
+                    body { 
+                        font-family: 'Segoe UI', system-ui, sans-serif; 
+                        background: linear-gradient(135deg, #e0e7ff 0%, #fef3c7 50%, #fce7f3 100%); 
+                        display: flex; 
+                        justify-content: center; 
+                        align-items: center; 
+                        height: 100vh; 
+                        margin:0; 
+                        color: #1e293b; 
+                    }
+                    .glass-card { 
+                        background: rgba(255, 255, 255, 0.45); 
+                        backdrop-filter: blur(14px); 
+                        -webkit-backdrop-filter: blur(14px);
+                        padding: 40px; 
+                        border-radius: 24px; 
+                        border: 1px solid rgba(255, 255, 255, 0.6); 
+                        text-align: center; 
+                        max-width: 420px; 
+                        width: 90%; 
+                        box-shadow: 0 20px 40px rgba(31, 38, 135, 0.06); 
+                    }
+                    .icon { 
+                        font-size: 55px; 
+                        color: #059669; 
+                        margin-bottom: 15px; 
+                        background: rgba(255, 255, 255, 0.6);
+                        width: 80px;
+                        height: 80px;
+                        line-height: 80px;
+                        border-radius: 50%;
+                        margin: 0 auto 20px auto;
+                        box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+                    }
+                    h2 { margin: 0 0 10px 0; color: #0f172a; font-weight: 700; font-size: 24px; }
+                    p { color: #475569; font-size: 15px; margin-bottom: 30px; line-height: 1.5; }
+                    a { 
+                        display: inline-block; 
+                        background: linear-gradient(135deg, #3b82f6, #1d4ed8); 
+                        color: white; 
+                        text-decoration: none; 
+                        font-weight: 600; 
+                        padding: 14px 28px; 
+                        border-radius: 12px; 
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+                        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+                    }
+                    a:hover { 
+                        transform: translateY(-2px); 
+                        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4); 
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="glass-card">
+                    <div class="icon">✓</div>
+                    <h2>Successfully Registered</h2>
+                    <p>Patient <b>${req.body.studentName}</b> has been securely synced to the live MongoDB Cluster.</p>
+                    <a href="/">← Registry Form</a>
+                </div>
+            </body>
+            </html>
+        `);
+    } catch (err) {
+        res.status(500).send("Error saving data to database: " + err.message);
+    }
 });
 
-app.get("/students", (req, res) => {
-    if (fs.existsSync("student_registry.txt")) {
-        const rawData = fs.readFileSync("student_registry.txt", "utf8");
-        const lines = rawData.split("\n").filter(line => line.trim() !== "");
+app.get("/students", async (req, res) => {
+    try {
+        const patients = await Patient.find({});
         
-        let tableRows = "";
-        lines.forEach(line => {
-            if (line.includes("undefined")) return;
-
-            let name = "-", date = "-", illness = "-";
-            
-            const nameMatch = line.match(/Name:\s*([^,]+)/);
-            const dateMatch = line.match(/Date:\s*([^,]+)/);
-            const illnessMatch = line.match(/Illness:\s*(.+)/) || line.match(/Roll No:\s*(.+)/);
-
-            if (nameMatch) name = nameMatch[1].trim();
-            if (dateMatch) date = dateMatch[1].trim();
-            if (illnessMatch) illness = illnessMatch[1].trim();
-
-            tableRows += `
-                <tr style="border-bottom: 1px solid rgba(187, 247, 208, 0.5); transition: all 0.2s ease;">
-                    <td style="padding: 1.1rem 1.3rem; font-weight: 600; color: #064e3b;">👤 ${name}</td>
-                    <td style="padding: 1.1rem 1.3rem; color: #14532d; font-weight: 500;">📅 ${date}</td>
-                    <td style="padding: 1.1rem 1.3rem;">
-                        <span style="background-color: #dcfce7; color: #15803d; padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; border: 1px solid #bbf7d0;">
-                            🩺 ${illness}
-                        </span>
+        let rows = "";
+        patients.forEach((p, index) => {
+            rows += `
+                <tr>
+                    <td><span class="serial-no">${index + 1}</span></td>
+                    <td>
+                        <div class="patient-profile">
+                            <div class="avatar">${p.studentName.charAt(0).toUpperCase()}</div>
+                            <span class="p-name">${p.studentName}</span>
+                        </div>
                     </td>
+                    <td><span class="badge-date">${p.dateOfAdmission}</span></td>
+                    <td><span class="badge-illness">${p.rollno}</span></td>
                 </tr>
             `;
         });
+
+        if (patients.length === 0) {
+            rows = `<tr><td colspan="4" class="no-data">No active records found in the database.</td></tr>`;
+        }
 
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <title>Patients Database</title>
-                ${commonStyles}
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Database Dashboard</title>
+                <style>
+                    body { 
+                        font-family: 'Segoe UI', system-ui, sans-serif; 
+                        background: linear-gradient(135deg, #e0e7ff 0%, #fef3c7 50%, #fce7f3 100%); 
+                        margin: 0; 
+                        padding: 40px 20px; 
+                        display: flex; 
+                        justify-content: center; 
+                        align-items: center; 
+                        min-height: 100vh; 
+                        box-sizing: border-box; 
+                        color: #1e293b; 
+                    }
+                    .glass-dashboard { 
+                        background: rgba(255, 255, 255, 0.4); 
+                        backdrop-filter: blur(16px); 
+                        -webkit-backdrop-filter: blur(16px);
+                        padding: 40px; 
+                        border-radius: 28px; 
+                        border: 1px solid rgba(255, 255, 255, 0.6); 
+                        max-width: 950px; 
+                        width: 100%; 
+                        box-shadow: 0 25px 50px rgba(31, 38, 135, 0.05); 
+                    }
+                    .header-area { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        align-items: center; 
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.4); 
+                        padding-bottom: 22px; 
+                        margin-bottom: 30px; 
+                    }
+                    h2 { 
+                        margin: 0; 
+                        font-size: 26px; 
+                        font-weight: 700; 
+                        color: #1e3a8a; 
+                        letter-spacing: -0.5px;
+                    }
+                    .btn-back { 
+                        background: rgba(255, 255, 255, 0.6); 
+                        color: #2563eb; 
+                        text-decoration: none; 
+                        padding: 12px 22px; 
+                        border-radius: 12px; 
+                        font-weight: 600; 
+                        font-size: 14px; 
+                        border: 1px solid rgba(255, 255, 255, 0.7); 
+                        transition: all 0.3s ease; 
+                    }
+                    .btn-back:hover { 
+                        background: linear-gradient(135deg, #3b82f6, #1d4ed8); 
+                        color: white; 
+                        border-color: transparent;
+                        transform: translateY(-2px); 
+                        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3); 
+                    }
+                    .table-container { overflow-x: auto; }
+                    table { width: 100%; border-collapse: collapse; text-align: left; }
+                    th { 
+                        color: #475569; 
+                        font-size: 13px; 
+                        font-weight: 700; 
+                        padding: 18px 16px; 
+                        border-bottom: 2px solid rgba(255, 255, 255, 0.5); 
+                        text-transform: uppercase; 
+                        letter-spacing: 0.7px; 
+                        background: rgba(255, 255, 255, 0.3);
+                    }
+                    td { padding: 18px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.3); color: #334155; font-size: 15px; }
+                    tr:hover td { background: rgba(255, 255, 255, 0.25); }
+                    .patient-profile { display: flex; align-items: center; gap: 14px; }
+                    .avatar { 
+                        width: 36px; 
+                        height: 36px; 
+                        background: linear-gradient(135deg, #60a5fa, #2563eb); 
+                        color: white; 
+                        border-radius: 50%; 
+                        display: flex; 
+                        justify-content: center; 
+                        align-items: center; 
+                        font-weight: 700; 
+                        font-size: 15px; 
+                        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+                    }
+                    .p-name { font-weight: 600; color: #0f172a; }
+                    .serial-no { color: #64748b; font-weight: 600; }
+                    .badge-date { 
+                        background: rgba(255, 255, 255, 0.6); 
+                        border: 1px solid rgba(255, 255, 255, 0.8); 
+                        color: #334155; 
+                        padding: 6px 14px; 
+                        border-radius: 8px; 
+                        font-size: 13px; 
+                        font-weight: 500;
+                    }
+                    .badge-illness { 
+                        background: rgba(239, 68, 68, 0.08); 
+                        border: 1px solid rgba(239, 68, 68, 0.2); 
+                        color: #b91c1c; 
+                        padding: 6px 16px; 
+                        border-radius: 50px; 
+                        font-size: 13px; 
+                        font-weight: 600; 
+                        display: inline-block; 
+                    }
+                    .no-data { text-align: center; color: #64748b; padding: 50px 0; font-style: italic; }
+                </style>
             </head>
             <body>
-                <div class="main-wrapper" style="max-width: 820px; flex-direction: column; padding: 2.5rem 2rem;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 15px;">
-                        <h2 style="font-size: 1.7rem; font-weight: 800; margin: 0; letter-spacing: -0.02em; color: #064e3b;">🧑‍⚕️ Doctor's Patient Directory</h2>
-                        <a href="/" style="color: var(--primary); text-decoration: none; font-weight: 700; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 5px;">
-                            <span>←</span> Dashboard
-                        </a>
+                <div class="glass-dashboard">
+                    <div class="header-area">
+                        <h2>🏥 Live Registry Management Dashboard</h2>
+                        <a href="/" class="btn-back">+ Add New Patient</a>
                     </div>
-                    
-                    <div style="overflow-x: auto; border: 1px solid var(--border); border-radius: 16px; background: rgba(255,255,255,0.6);">
-                        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+                    <div class="table-container">
+                        <table>
                             <thead>
-                                <tr style="background-color: rgba(220, 252, 231, 0.5); border-bottom: 1px solid var(--border);">
-                                    <th style="padding: 1.1rem 1.3rem; color: #064e3b; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em;">Patient Details</th>
-                                    <th style="padding: 1.1rem 1.3rem; color: #064e3b; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em;">Admit Date</th>
-                                    <th style="padding: 1.1rem 1.3rem; color: #064e3b; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em;">Assigned Diagnosis</th>
+                                <tr>
+                                    <th style="width: 8%">S.No</th>
+                                    <th style="width: 42%">Patient Name</th>
+                                    <th style="width: 25%">Admission Date</th>
+                                    <th style="width: 25%">Condition</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${tableRows ? tableRows : '<tr><td colspan="3" style="text-align:center; padding:3rem; color:#14532d; font-weight:500;">No medical records found.</td></tr>'}
+                                ${rows}
                             </tbody>
                         </table>
                     </div>
@@ -187,23 +272,8 @@ app.get("/students", (req, res) => {
             </body>
             </html>
         `);
-    } else {
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                ${commonStyles}
-            </head>
-            <body>
-                <div class="main-wrapper" style="max-width: 460px; flex-direction: column; padding: 3rem 2.5rem; text-align: center; align-items: center;">
-                    <div style="font-size: 3.5rem; margin-bottom: 1rem;">📭</div>
-                    <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 2rem; color: var(--text-muted);">No records registered yet.</h2>
-                    <a href="/" class="btn" style="width: 100%;">Go Back to Dashboard</a>
-                </div>
-            </body>
-            </html>
-        `);
+    } catch (err) {
+        res.status(500).send("Error retrieving data: " + err.message);
     }
 });
 
