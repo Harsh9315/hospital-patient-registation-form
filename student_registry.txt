@@ -1,8 +1,3 @@
-Name:harsh, Roll No: 23
-Name:shivam, Roll No: 36
-Name:undefined, Roll No: undefined
-Name:undefined, Roll No: undefined
-Name:shod, Roll No: dangue
 Name: shivam, Date: 2026-06-10, Illness: dangue
 Name: harsh, Date: 2026-06-11, Illness: dangue
 Name: harsh, Date: 2026-06-03, Illness: dangue
